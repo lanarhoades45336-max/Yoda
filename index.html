@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Real-time cryptocurrency prices, live charts and market intelligence for every digital asset.">
+  <meta name="description" content="Real-time crypto prices, live charts and market intelligence for every digital asset in the universe.">
+  <meta property="og:title" content="YODA CRYPTO — Real-Time Universe">
+  <meta property="og:description" content="Live prices and deep market data for 250+ digital assets.">
+  <meta name="theme-color" content="#01010a">
   <title>YODA CRYPTO — Real-Time Universe</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,246 +14,269 @@
   <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
-  <canvas id="bg-canvas"></canvas>
 
-  <!-- TICKER -->
-  <div class="ticker-wrapper">
-    <div class="ticker-mask">
-      <div class="ticker-content" id="ticker-content"></div>
+  <!-- LOADER ─────────────────────────────────── -->
+  <div id="loader" aria-live="polite">
+    <div class="ld-wrap">
+      <div class="ld-logo-wrap">
+        <svg class="ld-hex" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+          <polygon class="ld-poly" points="40,4 74,23 74,57 40,76 6,57 6,23"/>
+          <circle  class="ld-circ" cx="40" cy="40" r="5"/>
+        </svg>
+        <div class="ld-wordmark">YODA<span>CRYPTO</span></div>
+      </div>
+      <div class="ld-row">
+        <div class="ld-bar"><div id="ld-fill"></div></div>
+        <span class="ld-pct" id="ld-pct">0%</span>
+      </div>
+      <p class="ld-status" id="ld-status">Connecting to markets…</p>
     </div>
   </div>
 
-  <!-- NAV -->
-  <nav class="nav" id="nav">
+  <!-- CURSOR ──────────────────────────────────── -->
+  <div id="cur"     aria-hidden="true"></div>
+  <div id="cur-dot" aria-hidden="true"></div>
+
+  <!-- NOISE OVERLAY ───────────────────────────── -->
+  <div id="noise" aria-hidden="true"></div>
+
+  <!-- CANVAS BG ───────────────────────────────── -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- TICKER ──────────────────────────────────── -->
+  <div class="ticker-wrapper" aria-label="Live price ticker">
+    <div class="ticker-mask">
+      <div class="ticker-content" id="ticker-content" aria-live="off"></div>
+    </div>
+  </div>
+
+  <!-- NAV ─────────────────────────────────────── -->
+  <nav class="nav" id="nav" aria-label="Main navigation">
     <div class="nav-inner">
-      <div class="nav-logo">
-        <svg class="logo-mark" viewBox="0 0 32 32" fill="none">
-          <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" stroke="currentColor" stroke-width="1.5" fill="none"/>
-          <polygon points="16,8 24,13 24,21 16,26 8,21 8,13" stroke="currentColor" stroke-width="1" fill="none" opacity="0.5"/>
+      <a href="#hero" class="nav-logo" aria-label="YODA Crypto home">
+        <svg class="logo-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" stroke="currentColor" stroke-width="1.5"/>
+          <polygon points="16,8 24,13 24,21 16,26 8,21 8,13" stroke="currentColor" stroke-width="1" opacity=".45"/>
           <circle cx="16" cy="16" r="3" fill="currentColor"/>
         </svg>
         <div class="logo-text-wrap">
           <span class="logo-main">YODA</span>
           <span class="logo-sub">CRYPTO</span>
         </div>
-      </div>
+      </a>
 
-      <div class="nav-links" id="nav-links">
-        <a href="#hero" class="nav-link active" data-section="hero">Overview</a>
-        <a href="#trending" class="nav-link" data-section="trending">Trending</a>
-        <a href="#markets" class="nav-link" data-section="markets">Markets</a>
+      <div class="nav-links" role="list">
+        <a href="#hero"     class="nav-link active" data-section="hero"     role="listitem">Overview</a>
+        <a href="#trending" class="nav-link"         data-section="trending" role="listitem">Trending</a>
+        <a href="#markets"  class="nav-link"         data-section="markets"  role="listitem">Markets</a>
       </div>
 
       <div class="nav-right">
-        <div class="search-wrap">
-          <svg class="search-icon" viewBox="0 0 20 20" fill="none">
+        <div class="search-wrap" role="search">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.5"/>
             <path d="M13 13l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          <input type="text" id="search-input" class="search-input" placeholder="Search assets…" autocomplete="off" spellcheck="false">
-          <kbd class="search-kbd">⌘K</kbd>
-          <div class="search-dropdown" id="search-dropdown"></div>
+          <input type="search" id="search-input" class="search-input"
+            placeholder="Search assets…" autocomplete="off" spellcheck="false"
+            aria-label="Search cryptocurrencies" aria-controls="search-dropdown" aria-autocomplete="list">
+          <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
+          <div class="search-dropdown" id="search-dropdown" role="listbox" aria-label="Search results"></div>
         </div>
-        <div class="live-badge">
-          <span class="live-dot"></span>
-          LIVE
+        <div class="live-badge" role="status" aria-label="Live data feed active">
+          <span class="live-dot"></span>LIVE
         </div>
       </div>
     </div>
   </nav>
 
-  <!-- HERO -->
-  <section class="hero" id="hero">
-    <div class="hero-orbs">
+  <!-- HERO ────────────────────────────────────── -->
+  <section class="hero" id="hero" aria-label="Market overview">
+    <div class="hero-orbs" aria-hidden="true">
       <div class="orb orb-a"></div>
       <div class="orb orb-b"></div>
       <div class="orb orb-c"></div>
+      <div class="orb orb-d"></div>
     </div>
+
     <div class="hero-copy">
       <div class="hero-eyebrow">
-        <span class="eyebrow-dot"></span>
+        <span class="eyebrow-dot" aria-hidden="true"></span>
         Real-Time Universe
       </div>
-      <h1 class="hero-h1">
-        <span class="h1-line">The Crypto</span>
-        <span class="h1-line h1-gradient">Intelligence</span>
-        <span class="h1-line">Layer</span>
+      <h1 class="hero-h1" aria-label="The Crypto Intelligence Layer">
+        <span class="h1-line reveal-line"><span>The Crypto</span></span>
+        <span class="h1-line reveal-line"><span class="h1-grad">Intelligence</span></span>
+        <span class="h1-line reveal-line"><span>Layer</span></span>
       </h1>
-      <p class="hero-lead">Live prices and deep market data for every digital asset — updated every 30 seconds.</p>
+      <p class="hero-lead reveal-fade">Live prices and deep market data for every digital asset — refreshed every 30 seconds.</p>
     </div>
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card" id="sc-mcap">
+
+    <div class="stats-grid" id="stats-grid" aria-label="Global market statistics">
+      <div class="stat-card sc-primary" id="sc-mcap" role="group" aria-label="Global Market Cap">
         <div class="sc-label">Global Market Cap</div>
-        <div class="sc-value" id="sv-mcap">—</div>
-        <div class="sc-delta" id="sd-mcap">—</div>
+        <div class="sc-value mono" id="sv-mcap">—</div>
+        <div class="sc-delta" id="sd-mcap" aria-live="polite">—</div>
+        <div class="sc-decoration" aria-hidden="true"></div>
       </div>
-      <div class="stat-card" id="sc-vol">
+      <div class="stat-card" id="sc-vol" role="group" aria-label="24h Trading Volume">
         <div class="sc-label">24h Volume</div>
-        <div class="sc-value" id="sv-vol">—</div>
+        <div class="sc-value mono" id="sv-vol">—</div>
         <div class="sc-sub">24h Trading</div>
       </div>
-      <div class="stat-card" id="sc-dom">
+      <div class="stat-card" id="sc-dom" role="group" aria-label="Bitcoin Dominance">
         <div class="sc-label">BTC Dominance</div>
-        <div class="sc-value" id="sv-dom">—</div>
-        <div class="sc-bar-wrap">
-          <div class="sc-bar-track">
-            <div class="sc-bar-fill" id="sb-btc"></div>
-          </div>
+        <div class="sc-value mono" id="sv-dom">—</div>
+        <div class="sc-bar-wrap" aria-hidden="true">
+          <div class="sc-bar-track"><div class="sc-bar-fill" id="sb-btc"></div></div>
         </div>
       </div>
-      <div class="stat-card" id="sc-coins">
+      <div class="stat-card" id="sc-coins" role="group" aria-label="Active Assets">
         <div class="sc-label">Active Assets</div>
-        <div class="sc-value" id="sv-coins">—</div>
+        <div class="sc-value mono" id="sv-coins">—</div>
         <div class="sc-sub" id="sv-markets">— Markets</div>
       </div>
     </div>
   </section>
 
-  <!-- TRENDING -->
-  <section class="trending-section" id="trending">
+  <!-- TRENDING ─────────────────────────────────── -->
+  <section class="trending-section" id="trending" aria-label="Trending cryptocurrencies">
     <div class="sec-head">
       <h2 class="sec-title">Trending <span class="grad">Now</span></h2>
-      <div class="sec-rule"></div>
-      <span class="sec-badge" id="trending-ts">—</span>
+      <div class="sec-rule" aria-hidden="true"></div>
+      <span class="sec-badge" id="trending-ts" aria-live="polite">—</span>
     </div>
-    <div class="trending-scroller">
+    <div class="trending-scroller" role="list">
       <div class="trending-track" id="trending-track">
-        <div class="trend-skeleton"></div>
-        <div class="trend-skeleton"></div>
-        <div class="trend-skeleton"></div>
-        <div class="trend-skeleton"></div>
-        <div class="trend-skeleton"></div>
-        <div class="trend-skeleton"></div>
-        <div class="trend-skeleton"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
+        <div class="trend-skeleton" role="listitem" aria-label="Loading"></div>
       </div>
     </div>
   </section>
 
-  <!-- MARKETS -->
-  <section class="markets-section" id="markets">
+  <!-- MARKETS ──────────────────────────────────── -->
+  <section class="markets-section" id="markets" aria-label="All cryptocurrency markets">
     <div class="sec-head">
       <h2 class="sec-title">All <span class="grad">Markets</span></h2>
-      <div class="sec-rule"></div>
-      <div class="mkt-filters">
-        <button class="mf-btn active" data-sort="default">Default</button>
-        <button class="mf-btn" data-sort="gainers">Top Gainers</button>
-        <button class="mf-btn" data-sort="losers">Top Losers</button>
-        <button class="mf-btn" data-sort="volume">Volume</button>
+      <div class="sec-rule" aria-hidden="true"></div>
+      <div class="mkt-filters" role="group" aria-label="Market filters">
+        <button class="mf-btn active" data-sort="default"  aria-pressed="true">Default</button>
+        <button class="mf-btn"        data-sort="gainers"  aria-pressed="false">Top Gainers</button>
+        <button class="mf-btn"        data-sort="losers"   aria-pressed="false">Top Losers</button>
+        <button class="mf-btn"        data-sort="volume"   aria-pressed="false">Volume</button>
       </div>
     </div>
 
     <div class="table-shell">
-      <table class="mkt-table" id="mkt-table">
+      <table class="mkt-table" id="mkt-table" aria-label="Cryptocurrency prices">
         <thead>
           <tr>
-            <th class="th-rank">#</th>
-            <th class="th-asset">Asset</th>
-            <th class="th-price th-sort" data-col="price">Price <span class="th-arr">↕</span></th>
-            <th class="th-chg th-sort" data-col="h1">1h <span class="th-arr">↕</span></th>
-            <th class="th-chg th-sort" data-col="h24">24h <span class="th-arr">↕</span></th>
-            <th class="th-chg th-sort" data-col="d7">7d <span class="th-arr">↕</span></th>
-            <th class="th-num th-sort" data-col="mcap">Mkt Cap <span class="th-arr">↕</span></th>
-            <th class="th-num th-sort" data-col="vol">Volume (24h) <span class="th-arr">↕</span></th>
-            <th class="th-spark">7d Chart</th>
+            <th class="th-rank"  scope="col">#</th>
+            <th class="th-asset" scope="col">Asset</th>
+            <th class="th-price th-sort" data-col="price"  scope="col">Price        <span class="th-arr" aria-hidden="true">↕</span></th>
+            <th class="th-chg   th-sort" data-col="h1"     scope="col">1h           <span class="th-arr" aria-hidden="true">↕</span></th>
+            <th class="th-chg   th-sort" data-col="h24"    scope="col">24h          <span class="th-arr" aria-hidden="true">↕</span></th>
+            <th class="th-chg   th-sort" data-col="d7"     scope="col">7d           <span class="th-arr" aria-hidden="true">↕</span></th>
+            <th class="th-num   th-sort" data-col="mcap"   scope="col">Mkt Cap      <span class="th-arr" aria-hidden="true">↕</span></th>
+            <th class="th-num   th-sort" data-col="vol"    scope="col">Volume (24h) <span class="th-arr" aria-hidden="true">↕</span></th>
+            <th class="th-spark" scope="col">7d Chart</th>
           </tr>
         </thead>
         <tbody id="mkt-tbody"></tbody>
       </table>
     </div>
 
-    <div class="pagination" id="pagination">
-      <button class="pg-btn" id="pg-prev" disabled>← Prev</button>
-      <div class="pg-pages" id="pg-pages"></div>
-      <button class="pg-btn" id="pg-next">Next →</button>
+    <div class="pagination" id="pagination" aria-label="Pagination">
+      <button class="pg-btn" id="pg-prev" aria-label="Previous page" disabled>← Prev</button>
+      <div class="pg-pages" id="pg-pages" role="list"></div>
+      <button class="pg-btn" id="pg-next" aria-label="Next page">Next →</button>
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
+  <!-- FOOTER ───────────────────────────────────── -->
+  <footer class="site-footer" role="contentinfo">
     <div class="footer-inner">
       <div class="footer-brand">
-        <svg class="logo-mark sm" viewBox="0 0 32 32" fill="none">
-          <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" stroke="currentColor" stroke-width="1.5" fill="none"/>
+        <svg class="logo-mark sm" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <polygon points="16,2 30,10 30,22 16,30 2,22 2,10" stroke="currentColor" stroke-width="1.5"/>
           <circle cx="16" cy="16" r="3" fill="currentColor"/>
         </svg>
         YODACRYPTO
       </div>
       <div class="footer-meta">
         <span>Data by CoinGecko</span>
-        <span class="dot">·</span>
+        <span class="dot" aria-hidden="true">·</span>
         <span>Refreshes every 30s</span>
-        <span class="dot">·</span>
-        <span id="last-update-footer">—</span>
+        <span class="dot" aria-hidden="true">·</span>
+        <span id="last-update-footer" aria-live="polite">—</span>
       </div>
     </div>
   </footer>
 
-  <div id="toasts"></div>
-
-  <!-- ── AI CHAT PANEL ─────────────────────────────────────── -->
-  <button class="ai-fab" id="ai-fab" aria-label="Open YODA AI">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+  <!-- AI PANEL ─────────────────────────────────── -->
+  <button class="ai-fab" id="ai-fab" aria-label="Open YODA AI analyst" aria-expanded="false" aria-controls="ai-panel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
       <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
       <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/>
       <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/>
       <path d="M9 17s1 1.5 3 1.5 3-1.5 3-1.5" stroke-linecap="round"/>
     </svg>
-    <span class="ai-fab-ring"></span>
+    <span class="ai-fab-ring" aria-hidden="true"></span>
+    <span class="ai-fab-ring ai-fab-ring2" aria-hidden="true"></span>
   </button>
 
-  <div class="ai-overlay" id="ai-overlay"></div>
+  <div class="ai-overlay" id="ai-overlay" aria-hidden="true"></div>
 
-  <aside class="ai-panel" id="ai-panel" aria-label="YODA AI Analyst">
-    <!-- Header -->
+  <aside class="ai-panel" id="ai-panel" role="complementary" aria-label="YODA AI Analyst" aria-hidden="true">
     <div class="aip-head">
       <div class="aip-brand">
-        <div class="aip-avatar">◈</div>
+        <div class="aip-avatar" aria-hidden="true">◈</div>
         <div>
           <div class="aip-name">YODA AI</div>
-          <div class="aip-status"><span></span>Powered by Claude</div>
+          <div class="aip-status"><span aria-hidden="true"></span>Powered by Claude</div>
         </div>
       </div>
       <div class="aip-ctrl">
-        <button class="aip-icon-btn" id="aip-clear" title="Clear chat">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14">
-            <path d="M3 10a7 7 0 1 0 14 0A7 7 0 0 0 3 10z"/>
-            <path d="M10 7v3l2 2" stroke-linecap="round"/>
-          </svg>
+        <button class="aip-icon-btn" id="aip-clear" aria-label="Clear conversation" title="Clear chat">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" width="13" height="13" aria-hidden="true"><path d="M3 10a7 7 0 1 0 14 0A7 7 0 0 0 3 10z"/><path d="M10 7v3l2 2" stroke-linecap="round"/></svg>
         </button>
-        <button class="aip-icon-btn" id="aip-close" title="Close">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13">
-            <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round"/>
-          </svg>
+        <button class="aip-icon-btn" id="aip-close" aria-label="Close AI panel" title="Close">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" width="12" height="12" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" stroke-linecap="round"/></svg>
         </button>
       </div>
     </div>
 
-    <!-- Messages -->
-    <div class="aip-msgs" id="aip-msgs">
+    <div class="aip-msgs" id="aip-msgs" role="log" aria-label="Chat messages" aria-live="polite">
       <div class="ai-welcome" id="ai-welcome">
-        <div class="aiw-icon">◈</div>
+        <div class="aiw-icon" aria-hidden="true">◈</div>
         <h3>YODA AI Analyst</h3>
-        <p>Ask me anything about the market. I have live data on 250+ assets, trends, and global stats.</p>
-        <div class="ai-chips">
-          <button class="ai-chip" data-q="What's trending in the market right now?">🔥 What's trending right now?</button>
-          <button class="ai-chip" data-q="Analyze the top 10 cryptocurrencies by market cap">📊 Analyze the top 10 coins</button>
-          <button class="ai-chip" data-q="Which coins are the biggest gainers and losers today?">💹 Biggest gainers &amp; losers</button>
-          <button class="ai-chip" data-q="What is the overall crypto market sentiment today?">🌐 Overall market sentiment</button>
+        <p>Ask me anything about the market. I have live data on 250+ assets, global stats and trending coins.</p>
+        <div class="ai-chips" role="list">
+          <button class="ai-chip" data-q="What's trending in the crypto market right now?" role="listitem">🔥 What's trending right now?</button>
+          <button class="ai-chip" data-q="Analyze the top 10 cryptocurrencies by market cap" role="listitem">📊 Analyze the top 10 coins</button>
+          <button class="ai-chip" data-q="Which coins are the biggest gainers and losers today?" role="listitem">💹 Biggest gainers &amp; losers</button>
+          <button class="ai-chip" data-q="What is the overall crypto market sentiment today?" role="listitem">🌐 Overall market sentiment</button>
         </div>
       </div>
     </div>
 
-    <!-- Input -->
     <div class="aip-input-area">
-      <textarea class="aip-textarea" id="aip-textarea" placeholder="Ask about any coin, trend, or market…" rows="1" autocomplete="off" spellcheck="false"></textarea>
-      <button class="aip-send-btn" id="aip-send" aria-label="Send">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <textarea class="aip-textarea" id="aip-textarea" placeholder="Ask about any coin, trend, or market…" rows="1" autocomplete="off" spellcheck="false" aria-label="Message input" aria-multiline="true"></textarea>
+      <button class="aip-send-btn" id="aip-send" aria-label="Send message" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
         </svg>
       </button>
     </div>
-    <div class="aip-footer-note">Powered by Claude · Not financial advice</div>
+    <div class="aip-footer-note" aria-hidden="true">Powered by Claude · Not financial advice</div>
   </aside>
+
+  <div id="toasts" role="status" aria-live="assertive" aria-atomic="true"></div>
 
   <script src="assets/js/app.js"></script>
 </body>
