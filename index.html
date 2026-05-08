@@ -187,6 +187,71 @@
 
   <div id="toasts"></div>
 
+  <!-- ── AI CHAT PANEL ─────────────────────────────────────── -->
+  <button class="ai-fab" id="ai-fab" aria-label="Open YODA AI">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
+      <circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/>
+      <circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/>
+      <path d="M9 17s1 1.5 3 1.5 3-1.5 3-1.5" stroke-linecap="round"/>
+    </svg>
+    <span class="ai-fab-ring"></span>
+  </button>
+
+  <div class="ai-overlay" id="ai-overlay"></div>
+
+  <aside class="ai-panel" id="ai-panel" aria-label="YODA AI Analyst">
+    <!-- Header -->
+    <div class="aip-head">
+      <div class="aip-brand">
+        <div class="aip-avatar">◈</div>
+        <div>
+          <div class="aip-name">YODA AI</div>
+          <div class="aip-status"><span></span>Powered by Claude</div>
+        </div>
+      </div>
+      <div class="aip-ctrl">
+        <button class="aip-icon-btn" id="aip-clear" title="Clear chat">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14">
+            <path d="M3 10a7 7 0 1 0 14 0A7 7 0 0 0 3 10z"/>
+            <path d="M10 7v3l2 2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="aip-icon-btn" id="aip-close" title="Close">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" width="13" height="13">
+            <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="aip-msgs" id="aip-msgs">
+      <div class="ai-welcome" id="ai-welcome">
+        <div class="aiw-icon">◈</div>
+        <h3>YODA AI Analyst</h3>
+        <p>Ask me anything about the market. I have live data on 250+ assets, trends, and global stats.</p>
+        <div class="ai-chips">
+          <button class="ai-chip" data-q="What's trending in the market right now?">🔥 What's trending right now?</button>
+          <button class="ai-chip" data-q="Analyze the top 10 cryptocurrencies by market cap">📊 Analyze the top 10 coins</button>
+          <button class="ai-chip" data-q="Which coins are the biggest gainers and losers today?">💹 Biggest gainers &amp; losers</button>
+          <button class="ai-chip" data-q="What is the overall crypto market sentiment today?">🌐 Overall market sentiment</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="aip-input-area">
+      <textarea class="aip-textarea" id="aip-textarea" placeholder="Ask about any coin, trend, or market…" rows="1" autocomplete="off" spellcheck="false"></textarea>
+      <button class="aip-send-btn" id="aip-send" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="aip-footer-note">Powered by Claude · Not financial advice</div>
+  </aside>
+
   <script src="assets/js/app.js"></script>
 </body>
 </html>

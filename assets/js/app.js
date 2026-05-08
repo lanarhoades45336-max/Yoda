@@ -355,6 +355,10 @@ function coinRow(c) {
     <td><div class="td-asset">
       <img class="asset-logo" src="${c.image}" alt="" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 30 30%22><circle cx=%2215%22 cy=%2215%22 r=%2215%22 fill=%22%23111%22/></svg>'">
       <div><div class="asset-name">${c.name}</div><div class="asset-sym">${c.symbol.toUpperCase()}</div></div>
+      <button class="ask-ai-btn" onclick="event.stopPropagation();AI.open();AI.send('Analyze ${c.name.replace(/'/g,"\\'")} (${c.symbol.toUpperCase()}) — current price ${fmt.price(c.current_price)}, 24h change ${(c.price_change_percentage_24h||0).toFixed(2)}%, 7d change ${(c.price_change_percentage_7d_in_currency||0).toFixed(2)}%, market cap ${fmt.large(c.market_cap)}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-7a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="13" r="1" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="1" fill="currentColor" stroke="none"/></svg>
+        Ask AI
+      </button>
     </div></td>
     <td class="td-price" id="p-${c.id}">${fmt.price(c.current_price)}</td>
     <td class="td-chg"><span class="pill ${h1  >= 0 ? 'up' : 'dn'}">${fmt.pct(h1)}</span></td>
@@ -711,8 +715,8 @@ async function loadData() {
       updateFooterTime();
     }
 
-    if (glb.status === 'fulfilled') renderGlobal(glb.value);
-    if (trnd.status === 'fulfilled') renderTrending(trnd.value);
+    if (glb.status === 'fulfilled')  { S.global = glb.value;  renderGlobal(glb.value); }
+    if (trnd.status === 'fulfilled') { S.trending = trnd.value; renderTrending(trnd.value); }
 
   } catch (err) {
     console.error(err);
@@ -736,9 +740,274 @@ async function boot() {
   setInterval(loadData, CFG.REFRESH_MS);
   setInterval(updateFooterTime, 1000);
 
+  AI.init();
   toast('Live data connected ✓');
 }
 
 document.readyState === 'loading'
   ? document.addEventListener('DOMContentLoaded', boot)
   : boot();
+
+/* ============================================================
+   AI MODULE
+============================================================ */
+const AI = {
+  history:   [],
+  streaming: false,
+
+  get panel()   { return document.getElementById('ai-panel'); },
+  get overlay() { return document.getElementById('ai-overlay'); },
+  get fab()     { return document.getElementById('ai-fab'); },
+  get msgs()    { return document.getElementById('aip-msgs'); },
+  get textarea(){ return document.getElementById('aip-textarea'); },
+  get sendBtn() { return document.getElementById('aip-send'); },
+
+  open() {
+    this.panel.classList.add('open');
+    this.overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => this.textarea?.focus(), 420);
+  },
+
+  close() {
+    this.panel.classList.remove('open');
+    this.overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  },
+
+  clear() {
+    this.history = [];
+    const m = this.msgs;
+    if (!m) return;
+    m.innerHTML = '';
+    m.appendChild(this._makeWelcome());
+  },
+
+  _makeWelcome() {
+    const d = document.createElement('div');
+    d.id = 'ai-welcome';
+    d.className = 'ai-welcome';
+    d.innerHTML = `
+      <div class="aiw-icon">◈</div>
+      <h3>YODA AI Analyst</h3>
+      <p>Ask me anything about the market. I have live data on 250+ assets, trends, and global stats.</p>
+      <div class="ai-chips">
+        <button class="ai-chip" data-q="What's trending in the market right now?">🔥 What's trending right now?</button>
+        <button class="ai-chip" data-q="Analyze the top 10 cryptocurrencies by market cap">📊 Analyze the top 10 coins</button>
+        <button class="ai-chip" data-q="Which coins are the biggest gainers and losers today?">💹 Biggest gainers &amp; losers</button>
+        <button class="ai-chip" data-q="What is the overall crypto market sentiment today?">🌐 Overall market sentiment</button>
+      </div>`;
+    d.querySelectorAll('.ai-chip').forEach(btn =>
+      btn.addEventListener('click', () => { this.open(); this.send(btn.dataset.q); })
+    );
+    return d;
+  },
+
+  snapshot() {
+    const top20 = S.coins.slice(0, 20).map(c => ({
+      name: c.name, symbol: c.symbol,
+      price: fmt.price(c.current_price),
+      h1:   (c.price_change_percentage_1h_in_currency  || 0).toFixed(2),
+      h24:  (c.price_change_percentage_24h              || 0).toFixed(2),
+      d7:   (c.price_change_percentage_7d_in_currency  || 0).toFixed(2),
+      mcap: fmt.large(c.market_cap),
+    }));
+
+    const trending = ((S.trending?.coins) || []).slice(0, 7).map(t => ({
+      name: t.item.name, symbol: t.item.symbol,
+      change24h: (t.item.data?.price_change_percentage_24h?.usd || 0).toFixed(2),
+    }));
+
+    const g = S.global?.data;
+    const globalStats = g ? {
+      marketCap:    fmt.large(g.total_market_cap?.usd),
+      volume:       fmt.large(g.total_volume?.usd),
+      btcDom:       (g.market_cap_percentage?.btc || 0).toFixed(1) + '%',
+      mcapChange:   (g.market_cap_change_percentage_24h_usd || 0).toFixed(2) + '%',
+      activeAssets: (g.active_cryptocurrencies || '—').toLocaleString?.() || g.active_cryptocurrencies,
+    } : {};
+
+    return { top20, trending, globalStats };
+  },
+
+  async send(text) {
+    text = (text || '').trim();
+    if (!text || this.streaming) return;
+
+    if (this.textarea) { this.textarea.value = ''; this.textarea.style.height = 'auto'; }
+    if (this.sendBtn) this.sendBtn.disabled = true;
+
+    document.getElementById('ai-welcome')?.remove();
+
+    // User bubble
+    this._addBubble('user', text);
+    this.history.push({ role: 'user', content: text });
+
+    // Thinking
+    const thinkEl = this._addThinking();
+    this.streaming = true;
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: this.history.slice(-12),
+          marketSnapshot: this.snapshot(),
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      thinkEl.remove();
+
+      // AI bubble
+      const aiBubble = this._addBubble('ai', '');
+      const inner = aiBubble.querySelector('.msg-bubble');
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let full = '', buf = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+
+        const lines = buf.split('\n');
+        buf = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+          try {
+            const { t, error } = JSON.parse(raw);
+            if (error) throw new Error(error);
+            if (t) {
+              full += t;
+              inner.innerHTML = md(full) + '<span class="stream-cursor"></span>';
+              this.msgs.scrollTop = this.msgs.scrollHeight;
+            }
+          } catch { /* incomplete chunk */ }
+        }
+      }
+
+      inner.innerHTML = md(full);
+      this.history.push({ role: 'assistant', content: full });
+
+    } catch (err) {
+      thinkEl?.remove();
+      const errBubble = document.createElement('div');
+      errBubble.className = 'msg ai';
+      errBubble.innerHTML = `<div class="msg-bubble" style="border-color:rgba(255,54,91,0.25);color:var(--c-red)">
+        Could not reach AI server. Run <code>npm install && npm start</code> with a valid <code>ANTHROPIC_API_KEY</code>.
+      </div>`;
+      this.msgs.appendChild(errBubble);
+      console.error('AI:', err);
+    } finally {
+      this.streaming = false;
+      if (this.sendBtn) this.sendBtn.disabled = false;
+      this.msgs.scrollTop = this.msgs.scrollHeight;
+    }
+  },
+
+  _addBubble(role, content) {
+    const el = document.createElement('div');
+    el.className = `msg ${role}`;
+    el.innerHTML = role === 'user'
+      ? `<div class="msg-bubble">${esc(content)}</div>`
+      : `<div class="msg-bubble">${md(content)}</div>`;
+    this.msgs.appendChild(el);
+    this.msgs.scrollTop = this.msgs.scrollHeight;
+    return el;
+  },
+
+  _addThinking() {
+    const el = document.createElement('div');
+    el.className = 'msg ai';
+    el.innerHTML = `<div class="msg-bubble"><div class="thinking-dots"><span></span><span></span><span></span></div></div>`;
+    this.msgs.appendChild(el);
+    this.msgs.scrollTop = this.msgs.scrollHeight;
+    return el;
+  },
+
+  init() {
+    this.fab?.addEventListener('click', () => this.open());
+    this.overlay?.addEventListener('click', () => this.close());
+    document.getElementById('aip-close')?.addEventListener('click', () => this.close());
+    document.getElementById('aip-clear')?.addEventListener('click', () => this.clear());
+
+    this.sendBtn?.addEventListener('click', () => {
+      const t = this.textarea?.value;
+      if (t?.trim()) this.send(t);
+    });
+
+    this.textarea?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const t = this.textarea.value;
+        if (t.trim()) this.send(t);
+      }
+    });
+
+    this.textarea?.addEventListener('input', () => {
+      this.textarea.style.height = 'auto';
+      this.textarea.style.height = Math.min(this.textarea.scrollHeight, 120) + 'px';
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && this.panel?.classList.contains('open')) this.close();
+    });
+
+    // Chip suggestions in initial welcome
+    document.getElementById('ai-welcome')?.querySelectorAll('.ai-chip').forEach(btn =>
+      btn.addEventListener('click', () => { this.open(); this.send(btn.dataset.q); })
+    );
+  },
+};
+
+/* ── Markdown renderer ──────────────────────────────────────── */
+function md(raw) {
+  if (!raw) return '';
+
+  // Extract fenced code blocks before escaping
+  const blocks = [];
+  let s = raw.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+    blocks.push(`<pre><code>${esc(code.trim())}</code></pre>`);
+    return `\x00BLK${blocks.length - 1}\x00`;
+  });
+
+  // Escape remaining HTML
+  s = esc(s);
+
+  // Restore code blocks
+  s = s.replace(/\x00BLK(\d+)\x00/g, (_, i) => blocks[i]);
+
+  // Inline markdown
+  s = s
+    .replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`)
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g,   '<em>$1</em>')
+    .replace(/^###\s(.+)$/gm, '<h4>$1</h4>')
+    .replace(/^##\s(.+)$/gm,  '<h3>$1</h3>')
+    .replace(/^#\s(.+)$/gm,   '<h3>$1</h3>');
+
+  // Lists
+  s = s.replace(/((?:^[-•*]\s.+(?:\n|$))+)/gm, match => {
+    const items = match.trim().split('\n')
+      .map(l => `<li>${l.replace(/^[-•*]\s/, '')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Paragraphs
+  s = s.replace(/\n\n+/g, '</p><p>').replace(/\n/g, '<br>');
+  return `<p>${s}</p>`.replace(/<p><\/p>/g, '').replace(/<p>(<[hup])/g, '$1').replace(/(<\/[hup][^>]*>)<\/p>/g, '$1');
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}

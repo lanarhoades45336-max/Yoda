@@ -1,0 +1,16 @@
+{
+  "name": "yoda-crypto",
+  "version": "1.0.0",
+  "description": "Award-level real-time crypto price tracker with Claude AI analyst",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
